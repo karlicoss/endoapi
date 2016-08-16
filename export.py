@@ -1,35 +1,8 @@
 #!/usr/bin/env python
 
 from lib.endomondo import Endomondo
-import lib.tcx as tcx
-import re
 import getpass
-import sys
-import os
 
-
-# create a somewhat useful filename for the specified workout
-def create_filename(workout):
-    ret = ''
-    if workout.start_time:
-        ret = workout.start_time.strftime("%Y%m%d") + "_"
-    ret += str(workout.id)
-    name = workout.name
-    if name:
-        name = re.sub(r'[\[\]/\\;,><&*:%=+@!#\(\)\|\?\^]', '', name)
-        name = re.sub(r"[' \t]", '_', name)
-        ret += "_" + name
-    ret += ".tcx"
-    return ret
-
-
-# create a new directory to store the exported files in
-def create_directory(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-
-# create the TCX file for the specified workout
 def create_tcx_file(workout):
     directory_name = 'export'
     activity = workout.get_activity()

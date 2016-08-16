@@ -1,10 +1,7 @@
-#!/usr/bin/env python
-
 import requests
 import uuid
 import socket
 import datetime
-from . import tcx
 
 
 def to_datetime(v):
