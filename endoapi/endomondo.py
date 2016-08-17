@@ -85,29 +85,21 @@ class Endomondo:
     os = "Android"
     os_version = "2.2"
     model = "M"
+    user_agent = "Dalvik/1.4.0 (Linux; U; %s %s; %s Build/GRI54)" % (os, os_version, model)
+    device_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, socket.gethostname()))
 
-    def __init__(self, email=None, password=None):
+    def __init__(self, email, password):
         self.auth_token = None
         self.request = requests.session()
-        self.request.headers['User-Agent'] = self.get_user_agent()
-        if email and password:
-            self.auth_token = self.request_auth_token(email, password)
+        self.request.headers['User-Agent'] = self.user_agent
+        self.auth_token = self._request_auth_token(email, password)
 
-    def get_user_agent(self):
-        """HTTP User-Agent"""
-        return "Dalvik/1.4.0 (Linux; U; %s %s; %s Build/GRI54)" % (self.os, self.os_version, self.model)
-
-    def get_device_id(self):
-        return str(uuid.uuid5(uuid.NAMESPACE_DNS, socket.gethostname()))
-
-    def request_auth_token(self, email, password):
-
-        # API request for authentication
+    def _request_auth_token(self, email, password):
         params = {
             'email':            email,
             'password':         password,
             'country':          'US',
-            'deviceId':         self.get_device_id(),
+            'deviceId':         self.device_id,
             'os':               self.os,
             'appVersion':       "7.1",
             'appVariant':       "M-Pro",
@@ -120,7 +112,6 @@ class Endomondo:
                              params=params)
         lines = r.text.split("\n")
 
-        # check success
         if lines[0] != "OK":
             raise ValueError("Endomondo authentication failed, %s" % lines[0])
 
@@ -132,17 +123,18 @@ class Endomondo:
 
         return None
 
-    def parse_text(self, response):
-        """Parse API response as text"""
+    def _parse_text(self, response):
         lines = response.text.split("\n")
-        if (len(lines) < 1):
+
+        if len(lines) < 1:
             raise ValueError("Error: URL %s: empty response" % response.url)
 
         if lines[0] != "OK":
             raise ValueError("Error: URL %s: %s" % (response.url, lines[0]))
+
         return lines[1:]
 
-    def parse_json(self, response):
+    def _parse_json(self, response):
         """Parse API response as JSON"""
         return response.json()['data']
 
@@ -164,9 +156,9 @@ class Endomondo:
 
         # parse response in the appropriate format
         if format == 'text':
-            return self.parse_text(r)
+            return self._parse_text(r)
         if format == 'json':
-            return self.parse_json(r)
+            return self._parse_json(r)
         return r
 
     def get_workouts(self, max_results=40):
