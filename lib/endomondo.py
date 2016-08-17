@@ -179,14 +179,11 @@ class Endomondo:
 
 
 class EndomondoWorkout:
-    """Endomondo Workout wrapper"""
-
     def __init__(self, parent, properties):
         self.parent = parent
         self.properties = properties
         self.activity = None
 
-    # dict wrapper
     def __getattr__(self, name):
         value = None
         if name in self.properties:
@@ -198,17 +195,38 @@ class EndomondoWorkout:
         return value
 
     def get_activity(self):
-        """The TCX activity equivalent to this workout"""
+        lines = self.parent.call('readTrack', 'text', {'trackId': self.id})
 
-        if self.activity:
-            return self.activity
+        # the 1st line is activity details
+        data = lines[0].split(";")
+
+        def trackpoint(csv):
+            data = csv.split(';')
+            return {'lat': to_float(data[2]),
+                    'lon': to_float(data[3]),
+                    'alt': to_float(data[6]),
+                    'hr': to_float(data[7])}
+
+        activity = {'type': SPORTS.get(int(data[5]), "Other"),
+                    'trackpoints': list(map(trackpoint, lines[1:]))}
+
+        print(str(activity))
+
+#        for line in lines[1:]:
+#            data = line.split(";")
+#            if len(data) >= 9:
+#                w = tcx.Trackpoint()
+#                w.timestamp = to_datetime(data[0])
+#                w.latitude = to_float(data[2])
+#                w.longitude = to_float(data[3])
+#                w.altitude_meters = to_float(data[6])
+#                w.heart_rate = to_int(data[7])
+#                activity.trackpoints.append(w)
 
         # call to retrieve activity data
-        lines = self.parent.call('readTrack', 'text', {'trackId': self.id})
 
         print(lines)
 
-        # the 1st line is activity details
 #        data = lines[0].split(";")
 #        start_time = to_datetime(data[6])
 #        self.activity = tcx.Activity()
