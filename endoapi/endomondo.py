@@ -95,28 +95,21 @@ class Endomondo:
         self.auth_token = self._request_auth_token(email, password)
 
     def _request_auth_token(self, email, password):
-        params = {
-            'email':            email,
-            'password':         password,
-            'country':          'US',
-            'deviceId':         self.device_id,
-            'os':               self.os,
-            'appVersion':       "7.1",
-            'appVariant':       "M-Pro",
-            'osVersion':        self.os_version,
-            'model':            self.model,
-            'v':                2.4,
-            'action':           'PAIR'
-        }
-        r = self.request.get('http://api.mobile.endomondo.com/mobile/auth',
-                             params=params)
-        lines = r.text.split("\n")
+        params = {'email':       email,
+                  'password':    password,
+                  'country':     'US',
+                  'deviceId':    self.device_id,
+                  'os':          self.os,
+                  'appVersion':  "7.1",
+                  'appVariant':  "M-Pro",
+                  'osVersion':   self.os_version,
+                  'model':       self.model,
+                  'v':           2.4,
+                  'action':      'PAIR'}
 
-        if lines[0] != "OK":
-            raise ValueError("Endomondo authentication failed, %s" % lines[0])
+        r = self._simple_call('auth', params)
 
-        # retrieve auth token
-        for line in lines[1:]:
+        for line in self._parse_text(r):
             key, value = line.split("=")
             if key == "authToken":
                 return value
@@ -135,38 +128,33 @@ class Endomondo:
         return lines[1:]
 
     def _parse_json(self, response):
-        """Parse API response as JSON"""
         return response.json()['data']
 
-    def call(self, url, format, params={}):
-        """Call the Endomondo API"""
+    def _simple_call(self, command, params):
+        r = self.request.get('http://api.mobile.endomondo.com/mobile/' + command, params=params)
 
-        # API request
-        params.update({
-            'authToken': self.auth_token,
-            'language': 'EN'
-        })
-        r = self.request.get('http://api.mobile.endomondo.com/mobile/' + url,
-                             params=params)
-
-        # check success
         if r.status_code != requests.codes.ok:
             r.raise_for_status()
             return None
 
-        # parse response in the appropriate format
+        return r
+
+    def call(self, url, format, params={}):
+        params.update({'authToken': self.auth_token,
+                       'language': 'EN'})
+
+        r = self._simple_call(url, params)
+
         if format == 'text':
             return self._parse_text(r)
+
         if format == 'json':
             return self._parse_json(r)
+
         return r
 
     def get_workouts(self, max_results=40):
-        """Get the most recent workouts"""
-        if not max_results:
-            max_results = 100000000
-        json = self.call('api/workout/list', 'json',
-                         {'maxResults': max_results})
+        json = self.call('api/workout/list', 'json', {'maxResults': max_results})
         return [EndomondoWorkout(self, w) for w in json]
 
 
