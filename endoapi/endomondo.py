@@ -81,7 +81,7 @@ SPORTS = {
 }
 
 
-class Endomondo:
+class Protocol:
     os = "Android"
     os_version = "2.2"
     model = "M"
@@ -153,44 +153,49 @@ class Endomondo:
 
         return r
 
+class Endomondo:
+    def __init__(self, email, password):
+        self.protocol = Protocol(email, password)
+
     def get_workouts(self, max_results=40):
-        json = self.call('api/workout/list', 'json', {'maxResults': max_results})
-        return [EndomondoWorkout(self, w) for w in json]
+        json = self.protocol.call('api/workout/list', 'json', {'maxResults': max_results})
+        return [Workout(self.protocol, w) for w in json]
 
 
-class EndomondoWorkout:
-    def __init__(self, parent, properties):
-        self.parent = parent
+class Workout:
+    def __init__(self, protocol, properties):
+        self.protocol = protocol
         self.properties = properties
-        self.activity = None
+        self.id = self.properties['id']
 
-    def __getattr__(self, name):
-        value = None
-        if name in self.properties:
-            value = self.properties[name]
-            if name == 'sport':
-                value = SPORTS.get(value, 'Other')
-            elif name == 'start_time':
-                value = to_datetime(value)
-        return value
+    def __repr__(self):
+        return "#{} - {}".format(self.id, self.sport)
 
-    def get_activity(self):
-        lines = self.parent.call('readTrack', 'text', {'trackId': self.id})
+    @property
+    def sport(self):
+        sport = int(self.properties['sport'])
+        return SPORTS.get(sport, "Other")
 
-        # the 1st line is activity details
-        data = lines[0].split(";")
+    @property
+    def points(self):
+        return self._fetch_points()
+
+    def _fetch_points(self):
+        lines = self.protocol.call('readTrack', 'text', {'trackId': self.id})
 
         def trackpoint(csv):
             data = csv.split(';')
-            return {'lat': to_float(data[2]),
-                    'lon': to_float(data[3]),
-                    'alt': to_float(data[6]),
-                    'hr': to_float(data[7])}
+            if len(data) < 9:
+                return None
+            else:
+                return {'lat': to_float(data[2]),
+                        'lon': to_float(data[3]),
+                        'alt': to_float(data[6]),
+                        'hr': to_float(data[7])}
 
-        activity = {'type': SPORTS.get(int(data[5]), "Other"),
-                    'trackpoints': list(map(trackpoint, lines[1:]))}
+        return list(filter(lambda x: x is not None, map(trackpoint, lines[1:])))
 
-        print(str(activity))
+
 
 #        for line in lines[1:]:
 #            data = line.split(";")
@@ -204,8 +209,6 @@ class EndomondoWorkout:
 #                activity.trackpoints.append(w)
 
         # call to retrieve activity data
-
-        print(lines)
 
 #        data = lines[0].split(";")
 #        start_time = to_datetime(data[6])
