@@ -3,29 +3,6 @@ import uuid
 import socket
 import datetime
 
-
-def to_datetime(v):
-    return datetime.datetime.strptime(v, "%Y-%m-%d %H:%M:%S %Z")
-
-
-def to_float(v):
-    if v == '' or v is None:
-        return None
-    return float(v)
-
-
-def to_int(v):
-    if v == '' or v is None:
-        return None
-    return float(v)
-
-
-def to_meters(v):
-    v = to_float(v)
-    if v:
-        v *= 1000
-    return v
-
 SPORTS = {
     0:  'Running',
     1:  'Cycling, transport',
@@ -153,6 +130,7 @@ class Protocol:
 
         return r
 
+
 class Endomondo:
     def __init__(self, email, password):
         self.protocol = Protocol(email, password)
@@ -183,64 +161,23 @@ class Workout:
     def _fetch_points(self):
         lines = self.protocol.call('readTrack', 'text', {'trackId': self.id})
 
+        def to_datetime(v):
+            return datetime.datetime.strptime(v, "%Y-%m-%d %H:%M:%S %Z")
+
+        def to_float(v):
+            if v == '' or v is None:
+                return None
+            return float(v)
+
         def trackpoint(csv):
             data = csv.split(';')
             if len(data) < 9:
                 return None
             else:
-                return {'lat': to_float(data[2]),
+                return {'timestamp': to_datetime(data[0]),
+                        'lat': to_float(data[2]),
                         'lon': to_float(data[3]),
                         'alt': to_float(data[6]),
                         'hr': to_float(data[7])}
 
         return list(filter(lambda x: x is not None, map(trackpoint, lines[1:])))
-
-
-
-#        for line in lines[1:]:
-#            data = line.split(";")
-#            if len(data) >= 9:
-#                w = tcx.Trackpoint()
-#                w.timestamp = to_datetime(data[0])
-#                w.latitude = to_float(data[2])
-#                w.longitude = to_float(data[3])
-#                w.altitude_meters = to_float(data[6])
-#                w.heart_rate = to_int(data[7])
-#                activity.trackpoints.append(w)
-
-        # call to retrieve activity data
-
-#        data = lines[0].split(";")
-#        start_time = to_datetime(data[6])
-#        self.activity = tcx.Activity()
-#        self.activity.sport = SPORTS.get(int(data[5]), "Other")
-#        self.activity.start_time = start_time
-#        self.activity.notes = self.notes
-#
-#        # create a single lap for the whole activity
-#        l = tcx.ActivityLap()
-#        l.start_time = start_time
-#        l.timestamp = start_time
-#        l.total_time_seconds = to_float(data[7])
-#        l.distance_meters = to_meters(data[8])
-#        l.calories = to_int(data[9])
-#        l.min_altitude = to_float(data[11])
-#        l.max_altitude = to_float(data[12])
-#        l.max_heart = to_float(data[13])
-#        l.avg_heart = to_float(data[14])
-#        self.activity.laps.append(l)
-#
-#        # extra lines are activity trackpoints
-#        for line in lines[1:]:
-#            data = line.split(";")
-#            if len(data) >= 9:
-#                w = tcx.Trackpoint()
-#                w.timestamp = to_datetime(data[0])
-#                w.latitude = to_float(data[2])
-#                w.longitude = to_float(data[3])
-#                w.altitude_meters = to_float(data[6])
-#                w.distance_meters = to_meters(data[4])
-#                w.heart_rate = to_int(data[7])
-#                self.activity.trackpoints.append(w)
-#
-#        return self.activity
