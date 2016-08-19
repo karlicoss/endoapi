@@ -131,12 +131,27 @@ class Protocol:
         return r
 
 
+def _to_endomondo_time(time):
+    import pytz
+    return time.astimezone(pytz.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+
+def _to_python_time(endomondo_time):
+    return datetime.datetime.strptime(endomondo_time, "%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.utc)
+
+
 class Endomondo:
     def __init__(self, email, password):
         self.protocol = Protocol(email, password)
 
-    def get_workouts(self, max_results=40):
-        json = self.protocol.call('api/workout/list', 'json', {'maxResults': max_results})
+    def get_workouts(self, max_results=40, after=None):
+        params = {'maxResults': max_results}
+
+        if after is not None:
+            params.update({'after': _to_endomondo_time(after)})
+
+        json = self.protocol.call('api/workout/list', 'json', params)
+
         return [Workout(self.protocol, w) for w in json]
 
 
@@ -161,9 +176,6 @@ class Workout:
     def _fetch_points(self):
         lines = self.protocol.call('readTrack', 'text', {'trackId': self.id})
 
-        def to_datetime(v):
-            return datetime.datetime.strptime(v, "%Y-%m-%d %H:%M:%S %Z")
-
         def to_float(v):
             if v == '' or v is None:
                 return None
@@ -174,7 +186,7 @@ class Workout:
             if len(data) < 9:
                 return None
             else:
-                return {'timestamp': to_datetime(data[0]),
+                return {'time': _to_python_time(data[0]),
                         'lat': to_float(data[2]),
                         'lon': to_float(data[3]),
                         'alt': to_float(data[6]),
