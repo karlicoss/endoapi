@@ -2,6 +2,7 @@ import requests
 import uuid
 import socket
 import datetime
+import pytz
 
 SPORTS = {
     0:  'Running',
@@ -132,7 +133,6 @@ class Protocol:
 
 
 def _to_endomondo_time(time):
-    import pytz
     return time.astimezone(pytz.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
 
