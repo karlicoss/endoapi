@@ -145,7 +145,10 @@ def _to_python_time(endomondo_time):
 class Endomondo:
     def __init__(self, email=None, password=None, token=None):
         self.protocol = Protocol(email, password, token)
+
+        # for compatibility
         self.auth_token = self.protocol.auth_token
+        self.token = self.protocol.auth_token
 
     def get_workouts(self, max_results=40, after=None):
         params = {'maxResults': max_results}
