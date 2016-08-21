@@ -6,7 +6,8 @@ with open('requirements.txt') as f:
     required = f.read().splitlines()
 
 setup(name='Endoapi',
-      version='1.0',
+      version_format='{tag}.dev{commitcount}+{gitsha}',
+      setup_requires=['setuptools-git-version'],
       description='Unofficial API for Endomondo based on https://github.com/yannickcarer/endomondo-export',
       author='Piotr',
       author_email='podusowski@gmail.com',
