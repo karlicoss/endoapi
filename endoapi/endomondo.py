@@ -66,11 +66,13 @@ class Protocol:
     user_agent = "Dalvik/1.4.0 (Linux; U; %s %s; %s Build/GRI54)" % (os, os_version, model)
     device_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, socket.gethostname()))
 
-    def __init__(self, email, password):
-        self.auth_token = None
+    def __init__(self, email=None, password=None, token=None):
+        self.auth_token = token
         self.request = requests.session()
         self.request.headers['User-Agent'] = self.user_agent
-        self.auth_token = self._request_auth_token(email, password)
+
+        if self.auth_token is None:
+            self.auth_token = self._request_auth_token(email, password)
 
     def _request_auth_token(self, email, password):
         params = {'email':       email,
@@ -141,8 +143,9 @@ def _to_python_time(endomondo_time):
 
 
 class Endomondo:
-    def __init__(self, email, password):
-        self.protocol = Protocol(email, password)
+    def __init__(self, email=None, password=None, token=None):
+        self.protocol = Protocol(email, password, token)
+        self.auth_token = self.protocol.auth_token
 
     def get_workouts(self, max_results=40, after=None):
         params = {'maxResults': max_results}
