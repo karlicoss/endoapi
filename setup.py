@@ -2,6 +2,9 @@
 
 from distutils.core import setup
 
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
+
 setup(name='Endoapi',
       version='1.0',
       description='Unofficial API for Endomondo based on https://github.com/yannickcarer/endomondo-export',
@@ -9,4 +12,5 @@ setup(name='Endoapi',
       author_email='podusowski@gmail.com',
       url='https://github.com/podusowski/endoapi',
       packages=['endoapi'],
+      install_requires=required,
      )
