@@ -96,15 +96,37 @@ class Endomondo:
         self.auth_token = self.protocol.auth_token
         self.token = self.protocol.auth_token
 
-    def get_workouts(self, max_results=40, after=None):
-        params = {'maxResults': max_results}
+    def _get_workouts_chunk(self, max_results=40, before=None, after=None):
+        params = {'maxResults': max_results, 'fields': 'simple'}
 
         if after is not None:
             params.update({'after': _to_endomondo_time(after)})
 
+        if before is not None:
+            params.update({'before': _to_endomondo_time(before)})
+
         json = self.protocol.call('api/workout/list', 'json', params)
 
         return [Workout(self.protocol, w) for w in json]
+
+    def get_workouts(self, max_results=40, after=None):
+        chunk_size = 100
+
+        result = []
+        before = None
+        for part in range(500):
+            chunk = self._get_workouts_chunk(max_results=chunk_size, after=after, before=before)
+            result.extend(chunk)
+
+            import logging
+            logging.debug("chunk {} -> {}".format(chunk[0].start_time, chunk[-1].start_time))
+
+            if len(chunk) < chunk_size:
+                break
+            else:
+                before = _to_python_time(chunk[-1].start_time)
+
+        return result
 
 
 class Workout:
@@ -112,9 +134,10 @@ class Workout:
         self.protocol = protocol
         self.properties = properties
         self.id = self.properties['id']
+        self.start_time = self.properties['start_time']
 
     def __repr__(self):
-        return "#{} - {}".format(self.id, self.sport)
+        return "#{} {} {}".format(self.id, self.start_time, self.sport)
 
     @property
     def sport(self):
