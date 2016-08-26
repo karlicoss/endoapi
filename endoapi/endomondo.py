@@ -137,6 +137,9 @@ class Workout:
         self.id = properties['id']
         self.start_time = properties['start_time']
 
+        sport = int(properties['sport'])
+        self.sport = SPORTS.get(sport, "Other")
+
         try:
             self.points = list(self._parse_points(properties['points']))
         except Exception as e:
@@ -147,11 +150,6 @@ class Workout:
         return "#{} {} {}".format(self.id, self.start_time, self.sport)
 
     def _parse_points(self, json):
-
-        def to_float(v):
-            if v == '' or v is None:
-                return None
-            return float(v)
 
         def _float(dictionary, key):
             if key in dictionary.keys():
@@ -177,9 +175,3 @@ class Workout:
                 raise e
 
         return map(parse_point, json)
-
-    @property
-    def sport(self):
-        sport = int(self.properties['sport'])
-        return SPORTS.get(sport, "Other")
-
