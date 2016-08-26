@@ -112,7 +112,7 @@ class Endomondo:
         return [Workout(self.protocol, w) for w in json]
 
     def get_workouts(self, max_results=40, after=None):
-        chunk_size = 20
+        chunk_size = 40
 
         result = []
         before = None
