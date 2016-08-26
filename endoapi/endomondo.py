@@ -3,6 +3,8 @@ import uuid
 import socket
 import datetime
 import pytz
+import logging
+
 from .sports import SPORTS
 
 class Protocol:
@@ -97,7 +99,7 @@ class Endomondo:
         self.token = self.protocol.auth_token
 
     def _get_workouts_chunk(self, max_results=40, before=None, after=None):
-        params = {'maxResults': max_results, 'fields': 'simple'}
+        params = {'maxResults': max_results, 'fields': 'simple,points'}
 
         if after is not None:
             params.update({'after': _to_endomondo_time(after)})
@@ -110,7 +112,7 @@ class Endomondo:
         return [Workout(self.protocol, w) for w in json]
 
     def get_workouts(self, max_results=40, after=None):
-        chunk_size = 100
+        chunk_size = 20
 
         result = []
         before = None
@@ -118,7 +120,6 @@ class Endomondo:
             chunk = self._get_workouts_chunk(max_results=chunk_size, after=after, before=before)
             result.extend(chunk)
 
-            import logging
             logging.debug("chunk {} -> {}".format(chunk[0].start_time, chunk[-1].start_time))
 
             if len(chunk) < chunk_size:
@@ -133,38 +134,52 @@ class Workout:
     def __init__(self, protocol, properties):
         self.protocol = protocol
         self.properties = properties
-        self.id = self.properties['id']
-        self.start_time = self.properties['start_time']
+        self.id = properties['id']
+        self.start_time = properties['start_time']
+
+        try:
+            self.points = list(self._parse_points(properties['points']))
+        except Exception as e:
+            logging.error("skipping points because {}, data: {}".format(e, properties))
+            self.points = []
 
     def __repr__(self):
         return "#{} {} {}".format(self.id, self.start_time, self.sport)
 
-    @property
-    def sport(self):
-        sport = int(self.properties['sport'])
-        return SPORTS.get(sport, "Other")
-
-    @property
-    def points(self):
-        return self._fetch_points()
-
-    def _fetch_points(self):
-        lines = self.protocol.call('readTrack', 'text', {'trackId': self.id})
+    def _parse_points(self, json):
 
         def to_float(v):
             if v == '' or v is None:
                 return None
             return float(v)
 
-        def trackpoint(csv):
-            data = csv.split(';')
-            if len(data) < 9:
-                return None
+        def _float(dictionary, key):
+            if key in dictionary.keys():
+                return float(dictionary[key])
             else:
-                return {'time': _to_python_time(data[0]),
-                        'lat': to_float(data[2]),
-                        'lon': to_float(data[3]),
-                        'alt': to_float(data[6]),
-                        'hr': to_float(data[7])}
+                return None
 
-        return list(filter(lambda x: x is not None, map(trackpoint, lines[1:])))
+        def _int(dictionary, key):
+            if key in dictionary.keys():
+                return int(dictionary[key])
+            else:
+                return None
+
+        def parse_point(data):
+            try:
+                return {'time': _to_python_time(data['time']),
+                        'lat': float(data['lat']),
+                        'lon': float(data['lng']),
+                        'alt': _float(data, 'alt'),
+                        'hr': _int(data, 'hr')}
+            except KeyError as e:
+                logging.error("{}, data: {}".format(e, data))
+                raise e
+
+        return map(parse_point, json)
+
+    @property
+    def sport(self):
+        sport = int(self.properties['sport'])
+        return SPORTS.get(sport, "Other")
+
