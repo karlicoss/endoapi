@@ -120,7 +120,7 @@ class Endomondo:
             chunk = self._get_workouts_chunk(max_results=chunk_size, after=after, before=before)
             result.extend(chunk)
 
-            logging.debug("chunk {} -> {}".format(chunk[0].start_time, chunk[-1].start_time))
+            logging.debug("chunk #{} {} -> {}".format(part, chunk[0].start_time, chunk[-1].start_time))
 
             if len(chunk) < chunk_size:
                 break
