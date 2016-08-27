@@ -125,7 +125,7 @@ class Endomondo:
             if len(chunk) < chunk_size:
                 break
             else:
-                before = _to_python_time(chunk[-1].start_time)
+                before = chunk[-1].start_time
 
         return result
 
@@ -135,7 +135,8 @@ class Workout:
         self.protocol = protocol
         self.properties = properties
         self.id = properties['id']
-        self.start_time = properties['start_time']
+        self.start_time = _to_python_time(properties['start_time'])
+        self.duration = datetime.timedelta(seconds=properties['duration'])
 
         sport = int(properties['sport'])
         self.sport = SPORTS.get(sport, "Other")
@@ -147,7 +148,10 @@ class Workout:
             self.points = []
 
     def __repr__(self):
-        return "#{} {} {}".format(self.id, self.start_time, self.sport)
+        return "#{}, started: {}, duration: {}, sport: {}".format(self.id,
+                                                                  self.start_time,
+                                                                  self.duration,
+                                                                  self.sport)
 
     def _parse_points(self, json):
 
