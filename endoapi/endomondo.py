@@ -128,7 +128,6 @@ class Endomondo:
 
 class Workout:
     def __init__(self, properties):
-        self.properties = properties
         self.id = properties['id']
         self.start_time = _to_python_time(properties['start_time'])
         self.duration = datetime.timedelta(seconds=properties['duration'])
