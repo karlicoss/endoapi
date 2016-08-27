@@ -7,6 +7,7 @@ import logging
 
 from .sports import SPORTS
 
+
 class Protocol:
     os = "Android"
     os_version = "2.2"
