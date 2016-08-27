@@ -132,6 +132,7 @@ class Workout:
         self.id = properties['id']
         self.start_time = _to_python_time(properties['start_time'])
         self.duration = datetime.timedelta(seconds=properties['duration'])
+        self.distance = properties['distance']
 
         sport = int(properties['sport'])
         self.sport = SPORTS.get(sport, "Other")
@@ -143,10 +144,15 @@ class Workout:
             self.points = []
 
     def __repr__(self):
-        return "#{}, started: {}, duration: {}, sport: {}".format(self.id,
-                                                                  self.start_time,
-                                                                  self.duration,
-                                                                  self.sport)
+        return ("#{}, "
+                "started: {}, "
+                "duration: {}, "
+                "sport: {}, "
+                "distance: {}m").format(self.id,
+                                        self.start_time,
+                                        self.duration,
+                                        self.sport,
+                                        self.distance)
 
     def _parse_points(self, json):
 
