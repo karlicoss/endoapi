@@ -67,19 +67,13 @@ class Protocol:
 
         return r
 
-    def call(self, url, format, params={}):
+    def call(self, url, params={}):
         params.update({'authToken': self.auth_token,
                        'language': 'EN'})
 
         r = self._simple_call(url, params)
 
-        if format == 'text':
-            return self._parse_text(r)
-
-        if format == 'json':
-            return self._parse_json(r)
-
-        return r
+        return r.json()['data']
 
 
 def _to_endomondo_time(time):
@@ -107,7 +101,7 @@ class Endomondo:
         if before is not None:
             params.update({'before': _to_endomondo_time(before)})
 
-        json = self.protocol.call('api/workout/list', 'json', params)
+        json = self.protocol.call('api/workout/list', params)
 
         return [Workout(self.protocol, w) for w in json]
 
