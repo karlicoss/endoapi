@@ -107,7 +107,7 @@ class Endomondo:
 
         return list(map(Workout, json))
 
-    def get_workouts(self, max_results=40, after=None):
+    def get_workouts(self, max_results=None, after=None):
         chunk_size = 40
 
         result = []
@@ -118,7 +118,7 @@ class Endomondo:
 
             logging.debug("chunk #{} {} -> {}".format(part, chunk[0].start_time, chunk[-1].start_time))
 
-            if len(chunk) < chunk_size:
+            if len(chunk) < chunk_size or (max_results is not None and max_results < len(result)):
                 break
             else:
                 before = chunk[-1].start_time
