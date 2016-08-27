@@ -132,7 +132,7 @@ class Workout:
         self.id = properties['id']
         self.start_time = _to_python_time(properties['start_time'])
         self.duration = datetime.timedelta(seconds=properties['duration'])
-        self.distance = properties['distance']
+        self.distance = int(properties['distance'] * 1000)
 
         sport = int(properties['sport'])
         self.sport = SPORTS.get(sport, "Other")
