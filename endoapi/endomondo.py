@@ -93,7 +93,8 @@ class Endomondo:
         self.token = self.protocol.auth_token
 
     def _get_workouts_chunk(self, max_results=40, before=None, after=None):
-        params = {'maxResults': max_results, 'fields': 'simple,points'}
+        params = {'maxResults': max_results,
+                  'fields': 'simple,points'}
 
         if after is not None:
             params.update({'after': _to_endomondo_time(after)})
@@ -103,7 +104,7 @@ class Endomondo:
 
         json = self.protocol.call('api/workout/list', params)
 
-        return [Workout(self.protocol, w) for w in json]
+        return list(map(Workout, json))
 
     def get_workouts(self, max_results=40, after=None):
         chunk_size = 40
@@ -125,8 +126,7 @@ class Endomondo:
 
 
 class Workout:
-    def __init__(self, protocol, properties):
-        self.protocol = protocol
+    def __init__(self, properties):
         self.properties = properties
         self.id = properties['id']
         self.start_time = _to_python_time(properties['start_time'])
