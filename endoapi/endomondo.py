@@ -111,19 +111,13 @@ class Endomondo:
 
 
     def get_workouts(self, max_results=None, before=None, after=None):
-
-        def _get_time_bounds(chunk):
-            return chunk[0].start_time, chunk[-1].start_time
-
         _before = before
-        _after = after
-
         results = []
 
         while True:
             chunk = self.protocol.get_workouts_chunk(max_results=self.chunk_size,
                                                      before=_before,
-                                                     after=_after)
+                                                     after=after)
 
             if chunk:
                 results.extend(chunk)
