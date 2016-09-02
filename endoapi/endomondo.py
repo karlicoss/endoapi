@@ -76,7 +76,6 @@ class Protocol:
 
         return r.json()['data']
 
-
     def get_workouts_chunk(self, max_results=40, before=None, after=None):
         params = {'maxResults': max_results,
                   'fields': 'simple,points'}
@@ -108,7 +107,6 @@ class Endomondo:
         self.auth_token = self.protocol.auth_token
         self.token = self.protocol.auth_token
         self.chunk_size = 10
-
 
     def get_workouts(self, max_results=None, before=None, after=None):
         _before = before
