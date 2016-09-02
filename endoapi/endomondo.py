@@ -68,13 +68,28 @@ class Protocol:
 
         return r
 
-    def call(self, url, params={}):
+    def _call(self, url, params={}):
         params.update({'authToken': self.auth_token,
                        'language': 'EN'})
 
         r = self._simple_call(url, params)
 
         return r.json()['data']
+
+
+    def get_workouts_chunk(self, max_results=40, before=None, after=None):
+        params = {'maxResults': max_results,
+                  'fields': 'simple,points'}
+
+        if after is not None:
+            params.update({'after': _to_endomondo_time(after)})
+
+        if before is not None:
+            params.update({'before': _to_endomondo_time(before)})
+
+        json = self._call('api/workout/list', params)
+
+        return list(map(Workout, json))
 
 
 def _to_endomondo_time(time):
@@ -92,38 +107,32 @@ class Endomondo:
         # for compatibility
         self.auth_token = self.protocol.auth_token
         self.token = self.protocol.auth_token
+        self.chunk_size = 10
 
-    def _get_workouts_chunk(self, max_results=40, before=None, after=None):
-        params = {'maxResults': max_results,
-                  'fields': 'simple,points'}
 
-        if after is not None:
-            params.update({'after': _to_endomondo_time(after)})
+    def get_workouts(self, max_results=None, before=None, after=None):
 
-        if before is not None:
-            params.update({'before': _to_endomondo_time(before)})
+        def _get_time_bounds(chunk):
+            return chunk[0].start_time, chunk[-1].start_time
 
-        json = self.protocol.call('api/workout/list', params)
+        _before = before
+        _after = after
 
-        return list(map(Workout, json))
+        results = []
 
-    def get_workouts(self, max_results=None, after=None):
-        chunk_size = 40
+        while True:
+            chunk = self.protocol.get_workouts_chunk(max_results=self.chunk_size,
+                                                     before=_before,
+                                                     after=_after)
 
-        result = []
-        before = None
-        for part in range(500):
-            chunk = self._get_workouts_chunk(max_results=chunk_size, after=after, before=before)
-            result.extend(chunk)
+            if chunk:
+                results.extend(chunk)
+                _before = chunk[-1].start_time
 
-            logging.debug("chunk #{} {} -> {}".format(part, chunk[0].start_time, chunk[-1].start_time))
-
-            if len(chunk) < chunk_size or (max_results is not None and max_results < len(result)):
+            if not chunk or (max_results and len(results) >= max_results):
                 break
-            else:
-                before = chunk[-1].start_time
 
-        return result
+        return results
 
 
 class Workout:
