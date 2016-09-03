@@ -99,6 +99,14 @@ def _to_python_time(endomondo_time):
     return datetime.datetime.strptime(endomondo_time, "%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.utc)
 
 
+def connect(email=None, password=None, token=None):
+    '''
+    establish endomondo session by email/password or the token
+    if already known
+    '''
+    return Endomondo(email=email, password=password, token=token)
+
+
 class Endomondo:
     def __init__(self, email=None, password=None, token=None):
         self.protocol = Protocol(email, password, token)

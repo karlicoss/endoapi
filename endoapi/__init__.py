@@ -1,1 +1,1 @@
-__all__ = ['endomondo']
+from .endomondo import Endomondo, connect
