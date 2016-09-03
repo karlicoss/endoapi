@@ -1,12 +1,12 @@
 SPORTS = {
     0:  'Running',
-    1:  'Cycling, transport',
-    2:  'Cycling, sport',
-    3:  'Mountain biking',
+    1:  'Cycling',  # transport
+    2:  'Cycling',  # sport
+    3:  'Cycling',  # Mountain biking
     4:  'Skating',
     5:  'Roller skiing',
-    6:  'Skiing, cross country',
-    7:  'Skiing, downhill',
+    6:  'Skiing',  # Skiing, cross country
+    7:  'Skiing',  # Skiing, downhill
     8:  'Snowboarding',
     9:  'Kayaking',
     10: 'Kite surfing',
