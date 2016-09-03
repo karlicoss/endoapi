@@ -108,7 +108,7 @@ class Endomondo:
         self.token = self.protocol.auth_token
         self.chunk_size = 10
 
-    def get_workouts(self, max_results=None, before=None, after=None):
+    def _fetch_in_range(self, max_results=None, before=None, after=None):
         _before = before
         results = []
 
@@ -125,6 +125,18 @@ class Endomondo:
                 break
 
         return results
+
+    def get_workouts(self, max_results=None, before=None, after=None):
+        '''
+        if `before` is earlier than `after` all workouts except that in range will be fetched
+        '''
+        if before is not None and after is not None and before < after:
+            return (self._fetch_in_range(max_results=max_results, before=None, after=after) +
+                    self._fetch_in_range(max_results=max_results, before=before, after=None))
+        else:
+            return self._fetch_in_range(max_results=max_results, before=before, after=after)
+
+    fetch = get_workouts
 
 
 class Workout:
