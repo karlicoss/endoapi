@@ -138,10 +138,13 @@ class Endomondo:
         '''
         if `before` is earlier than `after` all workouts except that in range will be fetched
         '''
+
         if before is not None and after is not None and before < after:
+            logging.info("fetching {max_results} workouts, all except {before} .. {after}".format(max_results=max_results, before=before, after=after))
             return (self._fetch_in_range(max_results=max_results, before=None, after=after) +
                     self._fetch_in_range(max_results=max_results, before=before, after=None))
         else:
+            logging.info("fetching {max_results} workouts from {before} .. {after}".format(max_results=max_results, before=before, after=after))
             return self._fetch_in_range(max_results=max_results, before=before, after=after)
 
     fetch = get_workouts
