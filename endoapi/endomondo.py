@@ -163,6 +163,7 @@ class Workout:
 
         sport = int(properties['sport'])
         self.sport = SPORTS.get(sport, "Other")
+        self.sport_number = sport
 
         try:
             self.points = list(self._parse_points(properties['points']))
@@ -175,10 +176,12 @@ class Workout:
                 "started: {}, "
                 "duration: {}, "
                 "sport: {}, "
+                "sport_number: {}, "
                 "distance: {}m").format(self.id,
                                         self.start_time,
                                         self.duration,
                                         self.sport,
+                                        self.sport_number,
                                         self.distance)
 
     def _parse_points(self, json):

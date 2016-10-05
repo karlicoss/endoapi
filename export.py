@@ -11,7 +11,9 @@ def main():
     endomondo = endoapi.endomondo.Endomondo(email, password)
 
     workouts = endomondo.get_workouts(maximum_workouts)
-    print(str(workouts))
+
+    for workout in workouts:
+        print(workout)
 
 
 if __name__ == "__main__":
