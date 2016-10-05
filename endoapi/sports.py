@@ -49,5 +49,7 @@ SPORTS = {
     47: 'Yoga',
     48: 'Martial arts',
     49: 'Gymnastics',
-    50: 'Step counter'
+    50: 'Step counter',
+    88: 'Running, treadmill',
+    97: 'Running, trail'
 }
