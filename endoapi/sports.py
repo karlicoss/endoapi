@@ -15,7 +15,7 @@ SPORTS = {
     13: 'Windsurfing',
     14: 'Fitness walking',
     15: 'Golfing',
-    16: 'Hiking',
+    16: 'Walking', # Hiking
     17: 'Orienteering',
     18: 'Walking',
     19: 'Riding',
@@ -51,5 +51,5 @@ SPORTS = {
     49: 'Gymnastics',
     50: 'Step counter',
     88: 'Running, treadmill',
-    97: 'Running, trail'
+    97: 'Running' #, trail'
 }
