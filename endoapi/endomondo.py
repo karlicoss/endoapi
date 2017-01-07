@@ -204,6 +204,7 @@ class Workout:
                         'lat': float(data['lat']),
                         'lon': float(data['lng']),
                         'alt': _float(data, 'alt'),
+                        'cad': _int(data, 'cad'),
                         'hr': _int(data, 'hr')}
             except KeyError as e:
                 logging.error("{}, data: {}".format(e, data))
