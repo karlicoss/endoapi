@@ -88,7 +88,7 @@ class Protocol:
 
         json = self._call('api/workout/list', params)
 
-        return list(map(Workout, json))
+        return json
 
 
 def _to_endomondo_time(time):
@@ -127,18 +127,15 @@ class Endomondo:
 
             if chunk:
                 results.extend(chunk)
-                _before = chunk[-1].start_time
+                last_start_time = chunk[-1]['start_time']
+                _before = _to_python_time(last_start_time)
 
             if not chunk or (max_results and len(results) >= max_results):
                 break
 
         return results
 
-    def get_workouts(self, max_results=None, before=None, after=None):
-        '''
-        if `before` is earlier than `after` all workouts except that in range will be fetched
-        '''
-
+    def get_workouts_raw(self, max_results=None, before=None, after=None):
         if before is not None and after is not None and before < after:
             logging.info("fetching {max_results} workouts, all except {before} .. {after}".format(max_results=max_results, before=before, after=after))
             return (self._fetch_in_range(max_results=max_results, before=None, after=after) +
@@ -146,6 +143,13 @@ class Endomondo:
         else:
             logging.info("fetching {max_results} workouts from {before} .. {after}".format(max_results=max_results, before=before, after=after))
             return self._fetch_in_range(max_results=max_results, before=before, after=after)
+
+    def get_workouts(self, max_results=None, before=None, after=None):
+        '''
+        if `before` is earlier than `after` all workouts except that in range will be fetched
+        '''
+        raw = self.get_workouts_raw(max_results, before, after)
+        return list(map(Workout, raw))
 
     fetch = get_workouts
 
