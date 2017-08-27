@@ -7,6 +7,9 @@ import logging
 
 from .sports import SPORTS
 
+logger = logging.getLogger('endoapi')
+logger.addHandler(logging.NullHandler())
+
 
 class Protocol:
     os = "Android"
@@ -137,11 +140,11 @@ class Endomondo:
 
     def get_workouts_raw(self, max_results=None, before=None, after=None):
         if before is not None and after is not None and before < after:
-            logging.info("fetching {max_results} workouts, all except {before} .. {after}".format(max_results=max_results, before=before, after=after))
+            logger.info("fetching {max_results} workouts, all except {before} .. {after}".format(max_results=max_results, before=before, after=after))
             return (self._fetch_in_range(max_results=max_results, before=None, after=after) +
                     self._fetch_in_range(max_results=max_results, before=before, after=None))
         else:
-            logging.info("fetching {max_results} workouts from {before} .. {after}".format(max_results=max_results, before=before, after=after))
+            logger.info("fetching {max_results} workouts from {before} .. {after}".format(max_results=max_results, before=before, after=after))
             return self._fetch_in_range(max_results=max_results, before=before, after=after)
 
     def get_workouts(self, max_results=None, before=None, after=None):
@@ -174,7 +177,7 @@ class Workout:
         try:
             self.points = list(self._parse_points(properties['points']))
         except Exception as e:
-            logging.error("skipping points because {}, data: {}".format(e, properties))
+            logger.error("skipping points because {}, data: {}".format(e, properties))
             self.points = []
 
     def __repr__(self):
@@ -213,7 +216,7 @@ class Workout:
                         'cad': _int(data, 'cad'),
                         'hr': _int(data, 'hr')}
             except KeyError as e:
-                logging.error("{}, data: {}".format(e, data))
+                logger.error("{}, data: {}".format(e, data))
                 raise e
 
         return map(parse_point, json)
