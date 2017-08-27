@@ -160,6 +160,8 @@ class Workout:
         self.start_time = _to_python_time(properties['start_time'])
         self.duration = datetime.timedelta(seconds=properties['duration'])
 
+        self.calories = properties.get('calories', None)
+
         try:
             self.distance = int(properties['distance'] * 1000)
         except KeyError:
