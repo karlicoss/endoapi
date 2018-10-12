@@ -181,6 +181,8 @@ class Workout:
             logger.error("skipping points because {}, data: {}".format(e, properties))
             self.points = []
 
+        self.comment = properties.get('message', None)
+
     def __repr__(self):
         return ("#{}, "
                 "started: {}, "
