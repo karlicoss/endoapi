@@ -80,8 +80,9 @@ class Protocol:
         return r.json()['data']
 
     def get_workouts_chunk(self, max_results=40, before=None, after=None):
+        # see https://github.com/kanekotic/endomondo-unofficial-api/blob/master/lib/workout.js
         params = {'maxResults': max_results,
-                  'fields': 'simple,points'}
+                  'fields': 'device,simple,basic,interval,points'}
 
         if after is not None:
             params.update({'after': _to_endomondo_time(after)})
