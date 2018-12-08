@@ -51,5 +51,6 @@ SPORTS = {
     49: 'Gymnastics',
     50: 'Step counter',
     88: 'Running, treadmill',
-    97: 'Running' #, trail'
+    97: 'Running', #, trail'
+    102:'Rope jumping',
 }
