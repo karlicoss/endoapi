@@ -122,7 +122,7 @@ class Endomondo:
 
     def _fetch_in_range(self, max_results=None, before=None, after=None):
         _before = before
-        results = []
+        results = [] # type: ignore
 
         while True:
             chunk = self.protocol.get_workouts_chunk(max_results=self.chunk_size,
