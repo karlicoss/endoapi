@@ -1,15 +1,18 @@
-import requests
-import uuid
-import socket
 import datetime
-import pytz
 import logging
+import socket
+import uuid
+from typing import Iterator, NamedTuple, Optional
+
+import pytz
+import requests
 
 from .sports import SPORTS
 
+from kython.kerror import Res
+
 logger = logging.getLogger('endoapi')
 logger.addHandler(logging.NullHandler())
-
 
 class Protocol:
     os = "Android"
@@ -157,69 +160,73 @@ class Endomondo:
 
     fetch = get_workouts
 
+class EndoapiError(Exception):
+    pass
+
+class Point(NamedTuple):
+    time: datetime.datetime
+    hr  : Optional[float]
+    lat : Optional[float]
+    lon : Optional[float]
+
+    @classmethod
+    def parse(cls, d) -> Iterator[Res['Point']]:
+        time = d.get('time', None)
+        if time is None:
+            yield EndoapiError(f'No time: {d}')
+        else:
+            yield cls(
+                # TODO no time?? what would that mean?
+                time=_to_python_time(time),
+                hr  =d.get('hr' , None),
+                lat =d.get('lat', None),
+                lon =d.get('lon', None),
+            )
+        # TODO what is 'dist'? and 'inst'?
+                # return {'time': ),
+                #         'alt': _float(data, 'alt'),
+                #         'cad': _int(data, 'cad'),
+
 
 class Workout:
     def __init__(self, properties):
+        self.properties = properties
         self.id = properties['id']
         self.start_time = _to_python_time(properties['start_time'])
         self.duration = datetime.timedelta(seconds=properties['duration'])
-
-        self.calories = properties.get('calories', None)
 
         try:
             self.distance = int(properties['distance'] * 1000)
         except KeyError:
             self.distance = None
 
-        sport = int(properties['sport'])
-        self.sport = SPORTS.get(sport, "Other")
-        self.sport_number = sport
+        pdicts = properties.get('points', {}) # TODO not sure if should distinguish having no points and empty list?
+        self.points = list(self._parse_points(pdicts)) # TODO not sure what to do with errors?
 
-        try:
-            self.points = list(self._parse_points(properties['points']))
-        except Exception as e:
-            logger.error("skipping points because {}, data: {}".format(e, properties))
-            self.points = []
+    @property
+    def sport(self):
+        sport_num = int(self.properties['sport'])
+        return SPORTS.get(sport_num, 'Other')
 
-        self.comment = properties.get('message', None)
+    @property
+    def calories(self):
+        return self.properties.get('calories', None)
+
+    @property
+    def comment(self):
+        return self.properties.get('message', None)
 
     def __repr__(self):
         return ("#{}, "
                 "started: {}, "
                 "duration: {}, "
                 "sport: {}, "
-                "sport_number: {}, "
                 "distance: {}m").format(self.id,
                                         self.start_time,
                                         self.duration,
                                         self.sport,
-                                        self.sport_number,
                                         self.distance)
 
-    def _parse_points(self, json):
-
-        def _float(dictionary, key):
-            if key in dictionary.keys():
-                return float(dictionary[key])
-            else:
-                return None
-
-        def _int(dictionary, key):
-            if key in dictionary.keys():
-                return int(dictionary[key])
-            else:
-                return None
-
-        def parse_point(data):
-            try:
-                return {'time': _to_python_time(data['time']),
-                        'lat': float(data['lat']),
-                        'lon': float(data['lng']),
-                        'alt': _float(data, 'alt'),
-                        'cad': _int(data, 'cad'),
-                        'hr': _int(data, 'hr')}
-            except KeyError as e:
-                logger.error("{}, data: {}".format(e, data))
-                raise e
-
-        return map(parse_point, json)
+    def _parse_points(self, json) -> Iterator[Res[Point]]:
+        from itertools import chain
+        return chain.from_iterable(map(Point.parse, json))
