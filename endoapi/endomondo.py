@@ -2,14 +2,17 @@ import datetime
 import logging
 import socket
 import uuid
-from typing import Iterator, NamedTuple, Optional
+from typing import Iterator, NamedTuple, Optional, Union, TypeVar
 
 import pytz
 import requests
 
 from .sports import SPORTS
 
-from kython.kerror import Res
+
+T = TypeVar('T')
+Res = Union[T, Exception]
+
 
 logger = logging.getLogger('endoapi')
 logger.addHandler(logging.NullHandler())
@@ -68,6 +71,8 @@ class Protocol:
     def _simple_call(self, command, params):
         r = self.request.get('http://api.mobile.endomondo.com/mobile/' + command, params=params)
 
+        # false positive https://github.com/PyCQA/pylint/issues/1411
+        # pylint: disable=no-member
         if r.status_code != requests.codes.ok:
             r.raise_for_status()
             return None
@@ -160,8 +165,6 @@ class Endomondo:
 
     fetch = get_workouts
 
-class EndoapiError(Exception):
-    pass
 
 class Point(NamedTuple):
     time: datetime.datetime
@@ -170,13 +173,13 @@ class Point(NamedTuple):
     lon : Optional[float]
 
     @classmethod
-    def parse(cls, d) -> Iterator[Res['Point']]:
+    def parse(cls, d) -> Res['Point']:
         time = d.get('time', None)
         if time is None:
-            yield EndoapiError(f'No time: {d}')
+            # not sure why is that possible what would that mean?
+            return RuntimeError(f'No timestamp: {d}')
         else:
-            yield cls(
-                # TODO no time?? what would that mean?
+            return cls(
                 time=_to_python_time(time),
                 hr  =d.get('hr' , None),
                 lat =d.get('lat', None),
@@ -195,13 +198,13 @@ class Workout:
         self.start_time = _to_python_time(properties['start_time'])
         self.duration = datetime.timedelta(seconds=properties['duration'])
 
-        try:
-            self.distance = int(properties['distance'] * 1000)
-        except KeyError:
-            self.distance = None
+        dist = properties.get('distance')
+        self.distance = None if dist is None else int(dist * 1000)
 
-        pdicts = properties.get('points', {}) # TODO not sure if should distinguish having no points and empty list?
-        self.points = list(self._parse_points(pdicts)) # TODO not sure what to do with errors?
+        # TODO not sure if should distinguish having no points and empty list?
+        pointsdicts = properties.get('points', {})
+        # TODO could add policy for suppressing errors, if necessary
+        self.points = list(map(Point.parse, pointsdicts))
 
     @property
     def sport(self):
@@ -226,7 +229,3 @@ class Workout:
                                         self.duration,
                                         self.sport,
                                         self.distance)
-
-    def _parse_points(self, json) -> Iterator[Res[Point]]:
-        from itertools import chain
-        return chain.from_iterable(map(Point.parse, json))
