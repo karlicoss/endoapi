@@ -12,5 +12,8 @@ setup(name='Endoapi',
       author_email='podusowski@gmail.com',
       url='https://github.com/podusowski/endoapi',
       packages=['endoapi'],
+      package_dir={'endoapi': 'endoapi'},
+      package_data={'endoapi': ['py.typed']},
+
       install_requires=required,
      )
